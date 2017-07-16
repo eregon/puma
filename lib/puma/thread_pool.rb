@@ -72,6 +72,7 @@ module Puma
       @spawned += 1
 
       th = Thread.new do
+        Thread.current.abort_on_exception = true
         # Thread name is new in Ruby 2.3
         Thread.current.name = 'puma %03i' % @spawned if Thread.current.respond_to?(:name=)
         todo  = @todo
