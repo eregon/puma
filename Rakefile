@@ -141,7 +141,7 @@ end
 if IS_JRUBY
   task :test => [:java]
 else
-  task :test => [:compile]
+  # task :test => [:compile]
 end
 
 task :test => [:ensure_no_puma_gem]
