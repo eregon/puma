@@ -91,8 +91,8 @@ int puma_parser_init(puma_parser *parser)  {
   parser->nread = 0;
   parser->field_len = 0;
   parser->field_start = 0;
-  parser->request = Qnil;
-  parser->body = Qnil;
+  parser->request = HANDLE(Qnil);
+  parser->body = HANDLE(Qnil);
 
   return 1;
 }

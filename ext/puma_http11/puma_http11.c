@@ -201,11 +201,11 @@ void http_field(puma_parser* hp, const char *field, size_t flen,
   }
 
   /* check for duplicate header */
-  v = rb_hash_aref(hp->request, f);
+  v = rb_hash_aref(DEREF(hp->request), f);
 
   if (v == Qnil) {
       v = rb_str_new(value, vlen);
-      rb_hash_aset(hp->request, f, v);
+      rb_hash_aset(DEREF(hp->request), f, v);
   } else {
       /* if duplicate header, normalize to comma-separated values */
       rb_str_cat2(v, ", ");
@@ -218,7 +218,7 @@ void request_method(puma_parser* hp, const char *at, size_t length)
   VALUE val = Qnil;
 
   val = rb_str_new(at, length);
-  rb_hash_aset(hp->request, global_request_method, val);
+  rb_hash_aset(DEREF(hp->request), global_request_method, val);
 }
 
 void request_uri(puma_parser* hp, const char *at, size_t length)
@@ -228,7 +228,7 @@ void request_uri(puma_parser* hp, const char *at, size_t length)
   VALIDATE_MAX_LENGTH(length, REQUEST_URI);
 
   val = rb_str_new(at, length);
-  rb_hash_aset(hp->request, global_request_uri, val);
+  rb_hash_aset(DEREF(hp->request), global_request_uri, val);
 }
 
 void fragment(puma_parser* hp, const char *at, size_t length)
@@ -238,7 +238,7 @@ void fragment(puma_parser* hp, const char *at, size_t length)
   VALIDATE_MAX_LENGTH(length, FRAGMENT);
 
   val = rb_str_new(at, length);
-  rb_hash_aset(hp->request, global_fragment, val);
+  rb_hash_aset(DEREF(hp->request), global_fragment, val);
 }
 
 void request_path(puma_parser* hp, const char *at, size_t length)
@@ -248,7 +248,7 @@ void request_path(puma_parser* hp, const char *at, size_t length)
   VALIDATE_MAX_LENGTH(length, REQUEST_PATH);
 
   val = rb_str_new(at, length);
-  rb_hash_aset(hp->request, global_request_path, val);
+  rb_hash_aset(DEREF(hp->request), global_request_path, val);
 }
 
 void query_string(puma_parser* hp, const char *at, size_t length)
@@ -258,13 +258,13 @@ void query_string(puma_parser* hp, const char *at, size_t length)
   VALIDATE_MAX_LENGTH(length, QUERY_STRING);
 
   val = rb_str_new(at, length);
-  rb_hash_aset(hp->request, global_query_string, val);
+  rb_hash_aset(DEREF(hp->request), global_query_string, val);
 }
 
 void http_version(puma_parser* hp, const char *at, size_t length)
 {
   VALUE val = rb_str_new(at, length);
-  rb_hash_aset(hp->request, global_http_version, val);
+  rb_hash_aset(DEREF(hp->request), global_http_version, val);
 }
 
 /** Finalizes the request header to have a bunch of stuff that's
@@ -272,21 +272,23 @@ void http_version(puma_parser* hp, const char *at, size_t length)
 
 void header_done(puma_parser* hp, const char *at, size_t length)
 {
-  hp->body = rb_str_new(at, length);
+  hp->body = HANDLE(rb_str_new(at, length));
 }
 
 
-void HttpParser_free(void *data) {
+void HttpParser_free(puma_parser* hp) {
   TRACE();
 
-  if(data) {
-    xfree(data);
+  if(hp) {
+    rb_tr_release_handle(hp->request);
+    rb_tr_release_handle(hp->body);
+    xfree(hp);
   }
 }
 
 void HttpParser_mark(puma_parser* hp) {
-  if(hp->request) rb_gc_mark(hp->request);
-  if(hp->body) rb_gc_mark(hp->body);
+  // if(hp->request) rb_gc_mark(hp->request);
+  // if(hp->body) rb_gc_mark(hp->body);
 }
 
 VALUE HttpParser_alloc(VALUE klass)
@@ -301,7 +303,7 @@ VALUE HttpParser_alloc(VALUE klass)
   hp->query_string = query_string;
   hp->http_version = http_version;
   hp->header_done = header_done;
-  hp->request = Qnil;
+  hp->request = HANDLE(Qnil);
 
   puma_parser_init(hp);
 
@@ -391,7 +393,7 @@ VALUE HttpParser_execute(VALUE self, VALUE req_hash, VALUE data, VALUE start)
     rb_free_chars(dptr);
     rb_raise(eHttpParserError, "%s", "Requested start is after data buffer end.");
   } else {
-    http->request = req_hash;
+    http->request = HANDLE(req_hash);
     puma_parser_execute(http, dptr, dlen, from);
 
     rb_free_chars(dptr);
@@ -462,7 +464,7 @@ VALUE HttpParser_body(VALUE self) {
   puma_parser *http = NULL;
   DATA_GET(self, puma_parser, http);
 
-  return http->body;
+  return DEREF(http->body);
 }
 
 void Init_io_buffer(VALUE puma);

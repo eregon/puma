@@ -18,6 +18,9 @@
 
 #define BUFFER_LEN 1024
 
+#define HANDLE(x) rb_tr_handle_for_managed(x)
+#define DEREF(x) rb_tr_managed_from_handle(x)
+
 struct puma_parser;
 
 typedef void (*element_cb)(struct puma_parser* hp,
