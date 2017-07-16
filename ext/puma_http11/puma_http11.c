@@ -70,8 +70,8 @@ struct common_field {
  * objects to be used with rb_hash_aset().
  */
 static struct common_field common_http_fields[] = {
-# define f(N) { (sizeof(N) - 1), N, 0, Qnil }
-# define fr(N) { (sizeof(N) - 1), N, 1, Qnil }
+# define f(N) { (sizeof(N) - 1), N, 0, NULL }
+# define fr(N) { (sizeof(N) - 1), N, 1, NULL }
 	f("ACCEPT"),
 	f("ACCEPT_CHARSET"),
 	f("ACCEPT_ENCODING"),
@@ -135,10 +135,10 @@ static void init_common_fields(void)
 
   for(i = 0; i < ARRAY_SIZE(common_http_fields); cf++, i++) {
     if(cf->raw) {
-      cf->value = rb_str_new(cf->name, cf->len);
+      cf->value = rb_tr_handle_for_managed(rb_str_new(cf->name, cf->len));
     } else {
       memcpy(tmp + HTTP_PREFIX_LEN, cf->name, cf->len + 1);
-      cf->value = rb_str_new(tmp, HTTP_PREFIX_LEN + cf->len);
+      cf->value = rb_tr_handle_for_managed(rb_str_new(tmp, HTTP_PREFIX_LEN + cf->len));
     }
     rb_global_variable(&cf->value);
   }
@@ -162,13 +162,13 @@ static VALUE find_common_field_value(const char *field, size_t flen)
                                          ARRAY_SIZE(common_http_fields),
                                          sizeof(struct common_field),
                                          common_field_cmp);
-  return found ? found->value : Qnil;
+  return found ? rb_tr_managed_from_handle(found->value) : Qnil;
 #else /* !HAVE_QSORT_BSEARCH */
   unsigned i;
   struct common_field *cf = common_http_fields;
   for(i = 0; i < ARRAY_SIZE(common_http_fields); i++, cf++) {
     if (cf->len == flen && !memcmp(cf->name, field, flen))
-      return cf->value;
+      return rb_tr_managed_from_handle(cf->value);
   }
   return Qnil;
 #endif /* !HAVE_QSORT_BSEARCH */
