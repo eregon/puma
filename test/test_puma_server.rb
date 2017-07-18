@@ -1,5 +1,7 @@
 require_relative "helper"
 
+require "puma/events"
+
 class TestPumaServer < Minitest::Test
 
   def setup
