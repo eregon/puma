@@ -47,12 +47,12 @@ jobs:
         timeout-minutes: 10
         env:
           RUBYOPT: --enable-frozen-string-literal
-        if: matrix.ruby >= '2.6'
+        if: false
         run:  bundle exec rake
 
       - name: test without frozen string
         timeout-minutes: 10
-        if: matrix.ruby < '2.6'
+        if: true
         run:  bundle exec rake
 
   win32:
