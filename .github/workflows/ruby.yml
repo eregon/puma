@@ -14,8 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-18.04, macos ]
-        ruby: [ 2.3, 2.4, 2.5, 2.6, 2.7, ruby-head, truffleruby-head ]
+        os: [ ubuntu-18.04 ]
+        ruby: [ truffleruby-head ]
 
     steps:
       - name: repo checkout
@@ -56,6 +56,7 @@ jobs:
         run:  bundle exec rake
 
   win32:
+    if: false
     name: >-
       ${{ matrix.os }}, ${{ matrix.ruby }}
     env:
