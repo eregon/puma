@@ -33,11 +33,15 @@ jobs:
       - name: repo checkout
         uses: actions/checkout@v2
 
-      - name: load ruby, ragel
-        uses: MSP-Greg/setup-ruby-pkgs@v1
+      - name: load ruby
+        uses: eregon/setup-ruby@240a71d6b9d31971b61cec2a40d2f01ba703a0ad
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler: 1
+      - name: ragel
+        uses: MSP-Greg/setup-ruby-pkgs@v1
+        with:
+          ruby-version: none
           apt-get: ragel
           brew: ragel
           mingw: _upgrade_ openssl ragel
